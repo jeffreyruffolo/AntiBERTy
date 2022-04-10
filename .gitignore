@@ -1,129 +1,81 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# Prerequisites
+*.d
 
-# C extensions
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
 *.so
+*.dylib
+*.dll
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# Fortran module files
+*.mod
+*.smod
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# Executables
+*.exe
+*.out
+*.app
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
+# PyCharm
+.idea/
 venv/
-ENV/
-env.bak/
-venv.bak/
+__pycache__/
 
-# Spyder project settings
-.spyderproject
-.spyproject
+# VS Code
+.vscode/
 
-# Rope project settings
-.ropeproject
+# Project Specific (C++)
+bin/
+CMakeFiles/
+cmake_lib
+CMakeCache.txt
+CMakeLists.txt
+*.cmake
 
-# mkdocs documentation
-/site
+# Protein files
+*.pdb
+*.fasta
+*.aln  # Multiple Sequence Alignment (MSA) files
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+# Condor error output directory
+data/scripts/outerr/
 
-# Pyre type checker
-.pyre/
+# Data directories
+antibody_database/
+trained_models/
+
+# Etc.
+*.p
+*.swp
+*.csv
+*.tsv
+*.txt
+*.zip
+*.h5
+*.pyc
+*.png
+.ipynb_checkpoints/
+trained_models/
+ROSETTA_CRASH.log
+output_dir/
+/scripts/
+/data/
+temp/
+.DS_Store
+lightning_logs/
+wandb/
