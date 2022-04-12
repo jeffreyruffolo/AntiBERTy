@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from typing import Optional, Tuple
-
 import torch
 from torch import nn
 from transformers.models.bert.modeling_bert import BertPreTrainedModel, BertModel, BertLMPredictionHead, ModelOutput
 
-from deeph3.models.AntiBERTy.util import LabelSmoothing
-from deeph3.util.util import exists
+from antiberty.utils.general import exists
 
 
 class AntiBERTyHeads(nn.Module):
