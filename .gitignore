@@ -79,3 +79,4 @@ temp/
 .DS_Store
 lightning_logs/
 wandb/
+*.egg-info/
