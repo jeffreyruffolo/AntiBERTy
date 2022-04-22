@@ -21,5 +21,6 @@ def get_weights(dest="trained_models/"):
         raise Exception("Could not download weights from {}".format(url))
 
     os.system(f"tar -xzf {tarfile} -C {dest}")
+    os.remove(tarfile)
 
     return dest
