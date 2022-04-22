@@ -75,6 +75,7 @@ ROSETTA_CRASH.log
 output_dir/
 /scripts/
 /data/
+dist/
 temp/
 .DS_Store
 lightning_logs/
