@@ -1,1 +1,2 @@
 include antiberty/trained_models/AntiBERTy_md_smooth/*
+include antiberty/trained_models/vocab.txt

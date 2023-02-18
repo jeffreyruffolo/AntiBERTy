@@ -81,3 +81,5 @@ temp/
 lightning_logs/
 wandb/
 *.egg-info/
+training/
+preprocessing/
