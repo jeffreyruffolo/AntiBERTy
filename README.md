@@ -46,6 +46,8 @@ sequences = [
 embeddings, attentions = antiberty.embed(sequences, return_attention=True)
 ```
 
+The `embed` function can also be used with masked sequences. Masked residues should be indicated with underscores.
+
 ### Classification
 To use AntiBERTy to predict the species and chain type of sequences, use the `classify` function. The output is two lists of classifications for each sequences.
 
@@ -60,6 +62,8 @@ sequences = [
 ]
 species_preds, chain_preds = antiberty.classify(sequences)
 ```
+
+The `classify` function can also be used with masked sequences. Masked residues should be indicated with underscores.
 
 ### Mask prediction
 To use AntiBERTy to predict the identity of masked residues, use the `fill_masks` function. Masked residues should be indicated with underscores. The output is a list of filled sequences, corresponding to the input masked sequences.
