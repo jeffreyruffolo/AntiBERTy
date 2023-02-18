@@ -18,7 +18,7 @@ $ pip install AntiBERTy
 
 ### Embeddings
 
-To use AntiBERTy to generate sequence embeddings, use the `embed` function. The output is a list of embedding tensors, where each tensor is the embedding for the corresponding sequence. Each embedding has dimension `(Length + 2) x 512`.
+To use AntiBERTy to generate sequence embeddings, use the `embed` function. The output is a list of embedding tensors, where each tensor is the embedding for the corresponding sequence. Each embedding has dimension `[(Length + 2) x 512]`.
 
 ```python
 from antiberty import AntiBERTyRunner
@@ -32,7 +32,7 @@ sequences = [
 embeddings = antiberty.embed(sequences)
 ```
 
-To access the attention matrices, pass the `return_attention` flag to the `embed` function. The output is a list of attention matrices, where each matrix is the attention matrix for the corresponding sequence. Each attention matrix has dimension `Layer x Heads x (Length + 2) x (Length + 2)`.
+To access the attention matrices, pass the `return_attention` flag to the `embed` function. The output is a list of attention matrices, where each matrix is the attention matrix for the corresponding sequence. Each attention matrix has dimension `[Layer x Heads x (Length + 2) x (Length + 2)]`.
 
 ```python
 from antiberty import AntiBERTyRunner
