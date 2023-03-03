@@ -75,7 +75,7 @@ class AntiBERTyRunner():
         # gather embeddings
         embeddings = outputs.hidden_states
         embeddings = torch.stack(embeddings, dim=1)
-        embeddings = list(embeddings.detach().cpu())
+        embeddings = list(embeddings.detach())
 
         for i, a in enumerate(attention_mask):
             embeddings[i] = embeddings[i][:, a == 1]
@@ -88,7 +88,7 @@ class AntiBERTyRunner():
         if return_attention:
             attentions = outputs.attentions
             attentions = torch.stack(attentions, dim=1)
-            attentions = list(attentions.detach().cpu())
+            attentions = list(attentions.detach())
 
             for i, a in enumerate(attention_mask):
                 attentions[i] = attentions[i][:, :, a == 1]
