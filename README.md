@@ -80,6 +80,22 @@ sequences = [
 filled_sequences = antiberty.fill_masks(sequences)
 ```
 
+### Pseudo log-likelihood
+To use AntiBERTy to calculate the pseudo log-likelihood of a sequence, use the `pseudo_log_likelihood` function. The pseudo log-likelihood of a sequence is calculated as the average of per-residue masked log-likelihoods. The output is a list of pseudo log-likelihoods, corresponding to the input sequences.
+
+```python
+from antiberty import AntiBERTyRunner
+
+antiberty = AntiBERTyRunner()
+
+sequences = [
+    "EVQLVQSGPEVKKPGTSVKVSCKASGFTFMSSAVQWVRQARGQRLEWIGWIVIGSGNTNYAQKFQERVTITRDMSTSTAYMELSSLRSEDTAVYYCAAPYCSSISCNDGFDIWGQGTMVTVS",
+    "DVVMTQSSTPFSLPVSLGDQASISCRSSQSLVHSNGNTYLHWYLQKPGQSPKLLIYKVSNRFSGVPDRFSGSGSGTDFTLKISRVEAEDLGVYFCSQSTHVPYTFGGGTKLEIK",
+]
+
+pll = antiberty.pseudo_log_likelihood(sequences, batch_size=16)
+```
+
 ## Citing this work
 
 ```bibtex

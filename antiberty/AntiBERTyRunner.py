@@ -187,3 +187,56 @@ class AntiBERTyRunner():
         chain_preds = [LABEL_TO_CHAIN[p.item()] for p in chain_preds]
 
         return species_preds, chain_preds
+
+    def pseudo_log_likelihood(self, sequences, batch_size=None):
+        plls = []
+        for s in sequences:
+            masked_sequences = []
+            for i in range(len(s)):
+                masked_sequence = list(s[:i]) + ["[MASK]"] + list(s[i + 1:])
+                masked_sequences.append(" ".join(masked_sequence))
+
+            # masked_sequences = [" ".join(s) for s in masked_sequences]
+            tokenizer_out = self.tokenizer(
+                masked_sequences,
+                return_tensors="pt",
+                padding=True,
+            )
+            tokens = tokenizer_out["input_ids"].to(self.device)
+            attention_mask = tokenizer_out["attention_mask"].to(self.device)
+
+            logits = []
+            with torch.no_grad():
+                if not exists(batch_size):
+                    batch_size_ = len(masked_sequences)
+                else:
+                    batch_size_ = batch_size
+
+                from tqdm import tqdm
+                for i in tqdm(range(0, len(masked_sequences), batch_size_)):
+                    batch_end = min(i + batch_size_, len(masked_sequences))
+                    tokens_ = tokens[i:batch_end]
+                    attention_mask_ = attention_mask[i:batch_end]
+
+                    outputs = self.model(
+                        input_ids=tokens_,
+                        attention_mask=attention_mask_,
+                    )
+
+                    logits.append(outputs.prediction_logits)
+
+            logits = torch.cat(logits, dim=0)
+            logits[:, :, self.tokenizer.all_special_ids] = -float("inf")
+            logits = logits[:, 1:-1] # remove CLS and SEP tokens
+
+            # get masked token logits
+            logits = torch.diagonal(logits, dim1=0, dim2=1).unsqueeze(0)
+            labels = self.tokenizer.encode(" ".join(list(s)), return_tensors="pt")[:, 1:-1]
+            nll = torch.nn.functional.cross_entropy(logits, labels, reduction="mean")
+            pll = -nll
+
+            plls.append(pll)
+
+        plls = torch.stack(plls, dim=0)
+        
+        return plls
