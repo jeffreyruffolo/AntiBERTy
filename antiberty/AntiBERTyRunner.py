@@ -24,6 +24,9 @@ LABEL_TO_SPECIES = {
 }
 LABEL_TO_CHAIN = {0: "Heavy", 1: "Light"}
 
+SPECIES_TO_LABEL = {v: k for k, v in LABEL_TO_SPECIES.items()}
+CHAIN_TO_LABEL = {v: k for k, v in LABEL_TO_CHAIN.items()}
+
 
 class AntiBERTyRunner():
     def __init__(self):
@@ -144,7 +147,11 @@ class AntiBERTyRunner():
 
         return predicted_seqs
 
-    def classify(self, sequences):
+    def classify(self,
+                 sequences,
+                 species_label=None,
+                 chain_label=None,
+                 graft_label=None):
         """
         Classify a list of sequences by species and chain type. Sequences may contain
         missing residues, which are represented by an underscore character.
@@ -179,6 +186,30 @@ class AntiBERTyRunner():
             )
             species_logits = outputs.species_logits
             chain_logits = outputs.chain_logits
+            graft_logits = outputs.graft_logits
+
+        if exists(species_label) or exists(chain_label) or exists(graft_label):
+            out_dict = {}
+            if exists(species_label):
+                species_label = torch.tensor(
+                    [SPECIES_TO_LABEL[species_label]], ).to(self.device)
+                species_ll = -1 * torch.nn.functional.cross_entropy(
+                    species_logits, species_label)
+                out_dict["species_ll"] = species_ll.item()
+            if exists(chain_label):
+                chain_label = torch.tensor([CHAIN_TO_LABEL[chain_label]], ).to(
+                    self.device)
+                chain_ll = -1 * torch.nn.functional.cross_entropy(
+                    chain_logits, chain_label)
+                out_dict["chain_ll"] = chain_ll.item()
+            if exists(graft_label):
+                graft_label = torch.tensor([int(graft_label)], ).to(
+                    self.device)
+                graft_ll = -1 * torch.nn.functional.cross_entropy(
+                    graft_logits, graft_label)
+                out_dict["graft_ll"] = graft_ll.item()
+
+            return out_dict
 
         species_preds = torch.argmax(species_logits, dim=-1)
         chain_preds = torch.argmax(chain_logits, dim=-1)
@@ -227,16 +258,23 @@ class AntiBERTyRunner():
 
             logits = torch.cat(logits, dim=0)
             logits[:, :, self.tokenizer.all_special_ids] = -float("inf")
-            logits = logits[:, 1:-1] # remove CLS and SEP tokens
+            logits = logits[:, 1:-1]  # remove CLS and SEP tokens
 
             # get masked token logits
             logits = torch.diagonal(logits, dim1=0, dim2=1).unsqueeze(0)
-            labels = self.tokenizer.encode(" ".join(list(s)), return_tensors="pt")[:, 1:-1]
-            nll = torch.nn.functional.cross_entropy(logits, labels, reduction="mean")
+            labels = self.tokenizer.encode(
+                " ".join(list(s)),
+                return_tensors="pt",
+            )[:, 1:-1]
+            nll = torch.nn.functional.cross_entropy(
+                logits,
+                labels,
+                reduction="mean",
+            )
             pll = -nll
 
             plls.append(pll)
 
         plls = torch.stack(plls, dim=0)
-        
+
         return plls
