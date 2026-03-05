@@ -58,6 +58,8 @@ class AntiBERTy(BertPreTrainedModel):
         self.num_chains = 2
         self.num_grafts = 2
 
+        self.post_init()
+
     def get_output_embeddings(self):
         return self.cls.predictions.decoder
 
