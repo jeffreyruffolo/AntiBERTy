@@ -1,22 +1,28 @@
 from dataclasses import dataclass
 from typing import Optional, Tuple
+
 import torch
 from torch import nn
-from transformers.models.bert.modeling_bert import BertPreTrainedModel, BertModel, BertLMPredictionHead, ModelOutput
+from transformers.models.bert.modeling_bert import BertLMPredictionHead, BertModel, BertPreTrainedModel, ModelOutput
 
 from antiberty.utils.general import exists
+
+NUM_SPECIES = 6
+NUM_CHAINS = 2
+NUM_GRAFTS = 2
 
 
 class AntiBERTyHeads(nn.Module):
     """
     Classification heads for AntiBERTy model.
     """
+
     def __init__(self, config):
         super().__init__()
         self.predictions = BertLMPredictionHead(config)
-        self.species = nn.Linear(config.hidden_size, 6)
-        self.chain = nn.Linear(config.hidden_size, 2)
-        self.graft = nn.Linear(config.hidden_size, 2)
+        self.species = nn.Linear(config.hidden_size, NUM_SPECIES)
+        self.chain = nn.Linear(config.hidden_size, NUM_CHAINS)
+        self.graft = nn.Linear(config.hidden_size, NUM_GRAFTS)
 
     def forward(self, sequence_output, pooled_output):
         prediction_scores = self.predictions(sequence_output)
@@ -46,17 +52,25 @@ class AntiBERTy(BertPreTrainedModel):
     BERT model for antibody sequences, with classification heads
     for species, chain type, and presence of grafting
     """
+
+    # The MLM decoder shares its weight with the input embeddings and its bias with
+    # `cls.predictions.bias`; the checkpoint stores one copy of each.
+    _tied_weights_keys = {
+        "cls.predictions.decoder.weight": "bert.embeddings.word_embeddings.weight",
+        "cls.predictions.decoder.bias": "cls.predictions.bias",
+    }
+
     def __init__(self, config):
         super().__init__(config)
 
         self.bert = BertModel(config)
         self.cls = AntiBERTyHeads(config)
 
-        self.init_weights()
+        self.post_init()
 
-        self.num_species = 6
-        self.num_chains = 2
-        self.num_grafts = 2
+        self.num_species = NUM_SPECIES
+        self.num_chains = NUM_CHAINS
+        self.num_grafts = NUM_GRAFTS
 
     def get_output_embeddings(self):
         return self.cls.predictions.decoder
@@ -80,8 +94,8 @@ class AntiBERTy(BertPreTrainedModel):
         output_hidden_states=None,
         return_dict=None,
     ):
-        return_dict = return_dict if exists(
-            return_dict) else self.config.use_return_dict
+        if not exists(return_dict):
+            return_dict = getattr(self.config, "return_dict", True)
 
         outputs = self.bert(
             input_ids,
@@ -96,53 +110,36 @@ class AntiBERTy(BertPreTrainedModel):
         )
 
         sequence_output, pooled_output = outputs[:2]
-        prediction_scores, species_score, chain_score, graft_score = self.cls(
-            sequence_output, pooled_output)
+        prediction_scores, species_score, chain_score, graft_score = self.cls(sequence_output, pooled_output)
 
         b = input_ids.shape[0]
 
         total_loss, masked_lm_loss, species_loss, chain_loss, graft_loss = None, None, None, None, None
         if exists(labels):
             mlm_loss_fct = nn.CrossEntropyLoss()
-            masked_lm_loss = mlm_loss_fct(
-                prediction_scores.view(-1, self.config.vocab_size),
-                labels.view(-1))
+            masked_lm_loss = mlm_loss_fct(prediction_scores.view(-1, self.config.vocab_size), labels.view(-1))
+
+        def class_loss(logits, labels, num_classes):
+            # inverse-frequency class weights over the batch
+            freqs = torch.bincount(labels, minlength=num_classes).clamp(min=1)
+            weights = b / (freqs * num_classes)
+            return nn.CrossEntropyLoss(weight=weights.to(logits.dtype))(logits.view(-1, num_classes), labels.view(-1))
 
         if exists(species_label):
-            species_freqs = torch.bincount(species_label,
-                                           minlength=self.num_species)
-            species_weights = b / (species_freqs * self.num_species)
-            species_loss_fct = nn.CrossEntropyLoss(weight=species_weights)
-            species_loss = species_loss_fct(
-                species_score.view(-1, self.num_species),
-                species_label.view(-1))
+            species_loss = class_loss(species_score, species_label, self.num_species)
 
         if exists(chain_label):
-            chain_freqs = torch.bincount(chain_label,
-                                         minlength=self.num_chains)
-            species_weights = b / (chain_freqs * self.num_chains)
-            chain_loss_fct = nn.CrossEntropyLoss(weight=species_weights)
-            chain_loss = chain_loss_fct(chain_score.view(-1, 2),
-                                        chain_label.view(-1))
+            chain_loss = class_loss(chain_score, chain_label, self.num_chains)
 
         if exists(graft_label):
-            graft_freqs = torch.bincount(graft_label,
-                                         minlength=self.num_grafts)
-            graft_weights = b / (graft_freqs * self.num_grafts)
-            graft_loss_fct = nn.CrossEntropyLoss(weight=graft_weights)
-            graft_loss = graft_loss_fct(graft_score.view(-1, 2),
-                                        graft_label.view(-1))
+            graft_loss = class_loss(graft_score, graft_label, self.num_grafts)
 
-        total_loss = \
-            masked_lm_loss if exists(masked_lm_loss) else 0 \
-            + species_loss if exists(species_loss) else 0 \
-            + chain_loss if exists(chain_loss) else 0 \
-            + graft_loss if exists(graft_loss) else 0
+        losses = [l for l in (masked_lm_loss, species_loss, chain_loss, graft_loss) if exists(l)]
+        total_loss = sum(losses) if len(losses) > 0 else None
 
         if not return_dict:
-            output = (prediction_scores, species_score, chain_score,
-                      graft_score) + outputs[2:]
-            return ((total_loss, ) + output) if exists(total_loss) else output
+            output = (prediction_scores, species_score, chain_score, graft_score) + outputs[2:]
+            return ((total_loss,) + output) if exists(total_loss) else output
 
         return AntiBERTyOutput(
             loss=total_loss,
