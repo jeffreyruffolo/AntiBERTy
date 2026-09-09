@@ -57,7 +57,7 @@ data/scripts/outerr/
 
 # Data directories
 antibody_database/
-trained_models/
+antiberty/trained_models/AntiBERTy_md_smooth/
 
 # Etc.
 *.p
@@ -70,7 +70,6 @@ trained_models/
 *.pyc
 *.png
 .ipynb_checkpoints/
-trained_models/
 ROSETTA_CRASH.log
 output_dir/
 /scripts/
@@ -83,3 +82,8 @@ wandb/
 *.egg-info/
 training/
 preprocessing/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
